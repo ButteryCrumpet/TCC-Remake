@@ -6,7 +6,7 @@
 /*! svg4everybody v2.1.0 | github.com/jonathantneal/svg4everybody */
 ;function c(d,f){if(f){var e=document.createDocumentFragment(),g=!d.getAttribute("viewBox")&&f.getAttribute("viewBox");g&&d.setAttribute("viewBox",g);for(var h=f.cloneNode(!0);h.childNodes.length;){e.appendChild(h.firstChild)}d.appendChild(e)}}function b(d){d.onreadystatechange=function(){if(4===d.readyState){var e=d._cachedDocument;e||(e=d._cachedDocument=document.implementation.createHTMLDocument(""),e.body.innerHTML=d.responseText,d._cachedTarget={}),d._embeds.splice(0).map(function(f){var g=d._cachedTarget[f.id];g||(g=d._cachedTarget[f.id]=e.getElementById(f.id)),c(f.svg,g)})}},d.onreadystatechange()}function a(g){function f(){for(var q=0;q<h.length;){var n=h[q],o=n.parentNode;if(o&&/svg/i.test(o.nodeName)){var t=n.getAttribute("xlink:href");if(m&&(!e.validate||e.validate(t,o,n))){o.removeChild(n);var r=t.split("#"),p=r.shift(),u=r.join("#");if(p.length){var s=d[p];s||(s=d[p]=new XMLHttpRequest(),s.open("GET",p),s.send(),s._embeds=[]),s._embeds.push({svg:o,id:u}),b(s)}else{c(o,document.getElementById(u))}}}else{++q}}l(f,67)}var m,e=Object(g),i=/\bTrident\/[567]\b|\bMSIE (?:9|10)\.0\b/,k=/\bAppleWebKit\/(\d+)\b/,j=/\bEdge\/12\.(\d+)\b/;m="polyfill" in e?e.polyfill:i.test(navigator.userAgent)||(navigator.userAgent.match(j)||[])[1]<10547||(navigator.userAgent.match(k)||[])[1]<537;var d={},l=window.requestAnimationFrame||setTimeout,h=document.getElementsByTagName("use");m&&f()}return a});svg4everybody();
 
-
+//jQuery plugin to check for attribute
 $.fn.hasAttr = function(attrName) {
 	var result = false;
 	if (attrName && attrName !== '') {
@@ -17,9 +17,12 @@ $.fn.hasAttr = function(attrName) {
 	}
 	return result;
 };
+
+//utlities
 var Common = {
 	//overflow:true  background-size:cover
-	//overflow:false background-size:contain
+    //overflow:false background-size:contain
+    //trims to ints?
 	resizeTrimingRatio:function(wW,wH,iW,iH,overflow){
 		if(!overflow)overflow = true;
 		return (overflow)?
@@ -34,7 +37,7 @@ var Common = {
 			);
 	},
 	
-	//é…åˆ—ã‚’ã‚·ãƒ£ãƒƒãƒ•ãƒ«
+	//randomizes array
 	arrayShuffle:function(array){
 		var n = array.length, t, i;
 		while(n){
@@ -46,12 +49,12 @@ var Common = {
 		return array;
 	},
 	
-	//ä¾¡æ ¼ã‹ã‚‰ã‚«ãƒ³ãƒžã‚’ã¤ã‘ã‚‹
+	//replaces commas with $1
 	parseCommaFromValue:function(val){
 		return val.toString().replace(/(\d)(?=(\d\d\d)+$)/g,'$1,');
 	},
 	
-	//***æœ‰ã‚Šã®ä¾¡æ ¼æ–‡å­—åˆ—ã‹ã‚‰æ•°å€¤ã¸å¤‰æ›
+	//splits on a char and rejoins using a char
 	parseValueFromChar:function(val, splitChar, jointChar){
 		if(!splitChar) splitChar = ',';
 		if(!jointChar) jointChar = '';
@@ -123,7 +126,9 @@ var Common = {
 	//URLãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ã‚’å–å¾—ã—é…åˆ—ã«æ ¼ç´
 	urlParams:new Object,
 	
-	//è¦ç´ ãŒç¾ã‚ŒãŸã¨ãã«will-changeã‚’è¨­å®šã™ã‚‹
+    //custom event for inview.will-change
+    //adds will-class to element if (inview)
+    //find inview event?
 	setWillchangeInviewEvent:function() {
 		$('[data-willchange]').each(function(index, element, events) {
 			events = $._data($(element).get(0)).events;
@@ -143,7 +148,7 @@ var Common = {
 	setAlignElemLoopPC:null,
 	setAlignElemLoopSP:null,
 	
-	//ãã‚ãˆã‚‹
+	//
 	setAlignElem:function(){
 		var w = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
 		//é«˜ã•ãƒ»å¹…ã‚’æƒãˆã‚‹
@@ -158,7 +163,7 @@ var Common = {
 		Common.setAlignElemLoop = setInterval(function(){
 			Common.sortElementStyle('data-autowidth', 'width');
 			Common.sortElementStyle('data-autoheight', 'height');
-			clearInterval(Common.setAlignElemLoop);
+			clearInterval(Common.setAlignElemLoop); //why? just forcing async?
 		}, 600);
 		
 		if(640 < w){//pc
@@ -192,18 +197,21 @@ var Common = {
 		}
 	},
 	
-	//é«˜ã•ã‚’æƒãˆã‚‹
+    //sets height or width of elements to auto then
+    //sets height or width of elements to match heighest in query
+    //uses TweenMax
 	sortElementStyle:function(targetVal, type, compareVals, cmp){
 		
 		
-		compareVals = {};
+        compareVals = {}; //immediately deletes argument input
+        
 		$('['+targetVal+']').each(function(index, element) {
 			if(!compareVals[element.getAttribute(targetVal)]){
 				compareVals[element.getAttribute(targetVal)] = [];
 			}
 			compareVals[element.getAttribute(targetVal)].push(element);
 		});
-		
+        
 		for(var key in compareVals){
 			var priorityCompareFlg = false;
 			for(var i = 0; i < compareVals[key].length; i++){
@@ -211,7 +219,7 @@ var Common = {
 					priorityCompareFlg = true;
 				}
 			}
-			cmp = [];
+			cmp = []; //immediately deletes argument input
 			
 			if(type == 'width'){
 				TweenMax.set(compareVals[key], {width:'auto', onComplete:function(){
@@ -235,13 +243,15 @@ var Common = {
 						}
 						cmp.push($(compareVals[key][i]).outerHeight());
 					}
-					$(compareVals[key]).outerHeight(Math.max.apply(null, cmp));
+					$(compareVals[key]).outerHeight(Math.max.apply(null, cmp)); //gets max in an array
 				}});
 			}
 		}
 		return false;
 	},
-	
+    
+    //scrolls top minus a value if on small screen
+    //deletes any '#xxx' from the location
 	topScrollFunc:function(target, deleteHash, comp){
 		if(target){
 			if(target[0]){
@@ -273,7 +283,8 @@ var Common = {
 		}
 	},
 	
-	//ä»»æ„ã®ã‚¿ã‚¤ãƒŸãƒ³ã‚°ã§ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«
+    //scrolls after delay
+    //Uses TweenMax
 	scrollByLoaded:function(target){
 		TweenMax.set('body', {delay:0.4, onComplete:function(){
 			Common.topScrollFunc($('#'+location.hash.split('scroll-')[1]), true);
@@ -286,6 +297,7 @@ var Common = {
 	
 };
 
+//Route logging on load?
 (function(){
 	//URLã«ãƒãƒƒã‚·ãƒ¥
 	(function(){
@@ -297,6 +309,7 @@ var Common = {
 	})();
 })();
 
+//app specific jQuery IIF
 $(function() {
 	var googlemapFlg = false;
 	
@@ -312,7 +325,7 @@ $(function() {
 	//ç”»é¢è¡¨ç¤ºæ™‚ã«ã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«
 	if(Common.disableScrollInView) Common.scrollByLoaded();
 	
-	//consoleã®èª¿æ•´
+	//custom console window for debugging
 	if(!window.console){
 		window.console = {log:function(msg){}};
 	}else{
@@ -346,7 +359,7 @@ $(function() {
 		h,
 		s;
 	
-	//URLã«ãƒãƒƒã‚·ãƒ¥
+	//commented out
 	/*(function(){
 		if(location.hash.indexOf('#scroll-') != -1){
 			var target = $('#'+location.hash.split('#scroll-')[1]);
@@ -354,22 +367,22 @@ $(function() {
 		}
 	})();*/
 	
-	//will-change
+	//sets weill cheange event
 	(function() {
 		Common.setWillchangeInviewEvent();
 	})();
 	
-	//ã‚¿ãƒ–ã®ã‚¢ã‚¯ãƒ†ã‚£ãƒ–
+	//logs whether page tab is active
 	$(window).on('focus', function(e){
 		Common.pageHideFlg = false;
 	});
 	
-	//ã‚¿ãƒ–ã®éžã‚¢ã‚¯ãƒ†ã‚£ãƒ–
+	//compliment to above for when a different tab is active
 	$(window).on('blur', function(e){
 		Common.pageHideFlg = true;
 	});
 	
-	// ã‚¹ãƒ ãƒ¼ã‚ºã‚¹ã‚¯ãƒ­ãƒ¼ãƒ«
+	//smooth scroll event
 	$(document).on('click','a[href*="#"]',function(){
 		var str = this.getAttribute('href').split('#')[1];
 		var str2 = this.getAttribute('href').split('#scroll-')[1];
@@ -394,14 +407,16 @@ $(function() {
 		}
 	});
 	
-	//é›»è©±
+    //if modernizr detects touch events are active ~ mobile device
+    //sets telephone number as href so can be run on touch
 	$('[data-tel]').each(function(index, element) {
 		if(Modernizr.touchevents){//ã‚¿ãƒƒãƒãƒ‡ãƒã‚¤ã‚¹ã®ã¨ã
 			element.setAttribute('href', 'tel:' + element.getAttribute('data-tel').replace((new RegExp('-', "g")) ,''));
 		}
 	});
 	
-	//hoverä»£ã‚ã‚Š
+    //applied hover class on touch down and removes on touch up
+    //to make :hover sort of available for phones
 	(function() {
 		$(document).on('touchstart pointerdown', '*:not(html, body, main)', function(){
 			if(this.getAttribute('class')){
@@ -418,7 +433,7 @@ $(function() {
 		});
 	})();
 	
-	//ç”»é¢ã«é ˜åŸŸãŒç¾ã‚ŒãŸã¨ãã«ãƒšãƒ¼ã‚¸ãƒ—ãƒ©ã‚°ã‚¤ãƒ³ã‚’èª­ã¿è¾¼ã¿
+	//facebook integration?
 	(function(){
 		if($('[data-fbpage]')[0]){
 			$('[data-fbpage]').each(function(index, element) {
@@ -436,7 +451,8 @@ $(function() {
 	var switchResizeInit = true,
 		switchResizeName = '',
 		oldWidth;
-	
+    
+    //reactive sizing
 	$(window).on('resize', function(){
 		if($('html,body').scrollTop() !=0){
 			s = $('html,body').scrollTop();
@@ -608,7 +624,8 @@ $(function() {
 		//});
 	});
 	$(window).trigger('resize');
-	
+    
+    //
 	function loadfileChech(ele, result, string){
 		if(ele.getAttribute('data-loadfile')){
 			string = 'data-loadfile';
@@ -642,7 +659,8 @@ $(function() {
 			}
 		}
 	}
-	
+    
+    //lazyload
 	function loadfile(element, attr){
 		if(!element.getAttribute(attr)){
 			switch(element.tagName){
